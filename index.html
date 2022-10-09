@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>虚構侵蝕 観測者シート変換</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="./js/jszip.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
+</head>
+<body>
+
+    <div class="main" id="app">
+        <div class="container">
+            <h1>虚構侵蝕TRPG用ユドナリウムのキャラ駒変換</h1>
+            <p>虚構侵蝕TRPG公式サイトの観測者シートのコマ出力ボタンからユドナリウムで使えるコマを生成します。</p>
+            <a href="https://takuge-labo.com/kyokoshinshoku/chara-sheet/">虚構侵蝕TRPG 観測者シート</a>
+        
+            <div class="cp_iptxt">
+                <textarea name="example1" cols="80" rows="10" placeholder="ここに貼り付け" v-model="charadata">{{ charadata }}</textarea>
+            </div>
+            <button @click="Download" class="convert">ユドナリウム駒出力</button>
+            <button @click="clear" class="clear">クリア</button>
+
+            <h2>▼ 使い方</h2>
+            <ul>
+                <li>1.　公式サイトの観測者シートでコマ出力ボタンを押す</li>
+                <li>2.　ここに貼り付けと書かれたテキストエリアに張り付ける</li>
+                <li>3.　ユドナリウム駒出力ボタンを押す</li>
+                <li>4.　ユドナリウム用のキャラデータ(キャラクター名のzipファイル)がダウンロードされます</li>
+                <li>5.　ダウンロードしたzipファイルをユドナリウムにドラッグ＆ドロップ</li>
+            </ul>
+            <h2>▼ ユドナリウム側の設定</h2>
+            <ul>
+                <li>
+                    インベントリの表示項目を以下の内容で設定します。<br>HP 装備HP しがらみ 行動値 現実乖離 増加ダイス
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                charadata: '',
+                sheet_url: '',
+            },
+            methods: {
+                Download: function(){
+
+                    let charadatas = JSON.parse(this.charadata);
+
+                    //名前
+                    let name = charadatas.data.name;
+                    //HP
+                    let hp_lab = charadatas.data.status[0].label;
+                    let hp_val = charadatas.data.status[0].max;
+                    //装備HP
+                    let armor_lab = charadatas.data.status[1].label;
+                    let armor_val = charadatas.data.status[1].max;
+                    //現実乖離
+                    let discrepancy = charadatas.data.status[2].value;
+
+                    //params
+                    //行動値
+                    let initiative_lab = charadatas.data.params[7].label;
+                    let initiative_val = charadatas.data.params[7].value;
+                    
+                    //能力値
+                    //身体
+                    let strength_lab = charadatas.data.params[1].label;
+                    let strength_val = charadatas.data.params[1].value;
+                    //感覚
+                    let sense_lab = charadatas.data.params[2].label;
+                    let sense_val = charadatas.data.params[2].value;
+                    //精神 
+                    let spirit_lab = charadatas.data.params[3].label;
+                    let spirit_val = charadatas.data.params[3].value;
+                    //知性
+                    let intelligence_lab = charadatas.data.params[4].label;
+                    let intelligence_val = charadatas.data.params[4].value;
+
+                    //チャパレ
+                    let dicebot = charadatas.data.commands;
+
+                    //増加ダイス
+                    let incrdice = charadatas.data.status[3].value;
+
+                    let data = `<?xml version="1.0" encoding="UTF-8"?>`;
+                    data += `<character location.name="table" location.x="75" location.y="325" posZ="0" rotate="0" roll="0">`;
+                    data += `<data name="character">`;
+                    data += `<data name="image"><data type="image" name="imageIdentifier">null</data></data><data name="common">`;
+                    data += `<data name="name">${name}</data><data name="size">2</data></data>`
+                    data += `<data name="detail"><data name="リソース">`
+                    data += `<data type="numberResource" currentValue="${hp_val}" name="${hp_lab}">${hp_val}</data>`
+                    data += `<data type="numberResource" currentValue="${armor_val}" name="${armor_lab}">${armor_val}</data>`
+                    data += `<data name="しがらみ" type="numberResource" currentValue="1">1</data>`
+                    data += `<data name="行動値" type="numberResource" currentValue="${initiative_val}">${initiative_val}</data>`
+                    data += `<data name="現実乖離" type="numberResource" currentValue="${discrepancy}">7</data>`
+                    data += `<data name="増加ダイス" type="numberResource" currentValue="${incrdice}">3</data>`
+                    data += `</data>`
+                    data += `<data name="能力">`
+                    data += `<data name="${strength_lab}">${strength_val}</data>`
+                    data += `<data name="${sense_lab}">${sense_val}</data>`
+                    data += `<data name="${spirit_lab}">${spirit_val}</data>`
+                    data += `<data name="${intelligence_lab}">${intelligence_val}</data>`
+                    data += `</data></data></data>`
+                    data += `<chat-palette dicebot="">${dicebot}</chat-palette></character>`
+
+                    const filename = 'data.xml';
+
+                    var zip = new JSZip();
+                    zip.file(filename, data); // テキストファイルの追加
+                    zip.generateAsync({type:'blob'})
+                    .then(function(content) {
+                        const url = (window.URL || window.webkitURL).createObjectURL(content);
+                        const download = document.createElement('a');
+                        download.href = url;
+                        download.download = `xml_${name}.zip`;
+                        download.click();
+                        (window.URL || window.webkitURL).revokeObjectURL(url);
+                    });
+                },
+                clear: function(){
+                    this.charadata = '';
+                }
+            }
+        })
+    </script>
+</body>
+</html>
