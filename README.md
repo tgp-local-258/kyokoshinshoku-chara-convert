@@ -1,6 +1,9 @@
 # kyokoshinshoku-chara-convert
 
-虚構侵蝕TRPG用ユドナリウムのキャラ駒変換 HTML版です。
+虚構侵蝕TRPG用ユドナリウムのキャラ駒変換 HTML版です。  
+
+GitPage公開版は以下  
+https://tgp-local-258.github.io/kyokoshinshoku-chara-convert/  
 
 虚構侵蝕TRPG公式サイトの観測者シートでコマ出力によってコピーされた内容を  
 テキストエリアに張り付けてユドナリウム駒出力ボタンを押して下さい。
